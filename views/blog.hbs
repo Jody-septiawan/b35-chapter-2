@@ -57,11 +57,11 @@
             {{#if this.isLogin}}
               <div class='button-group'>
                 <a class='btn-edit'>Edit Post</a>
-                <a href='/delete-blog/{{@index}}' class='btn-post'>Delete Blog</a>
+                <a href='/delete-blog/{{this.id}}' class='btn-post'>Delete Blog</a>
               </div>
             {{/if}}
             <h1>
-              <a href='/detail-blog/{{@index}}' target='_blank'>
+              <a href='/detail-blog/{{this.id}}' target='_blank'>
                 {{this.title}}
               </a>
             </h1>

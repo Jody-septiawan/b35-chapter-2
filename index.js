@@ -51,8 +51,6 @@ app.get('/blog', (req, res) => {
         return blog;
       });
 
-      console.log(newBlog);
-
       res.render('blog', { isLogin: isLogin, blogs: newBlog });
     });
 
@@ -65,31 +63,63 @@ app.get('/add-blog', (req, res) => {
 });
 
 app.post('/add-blog', (req, res) => {
-  const data = req.body;
+  const title = req.body.title;
+  const content = req.body.content;
 
-  data.postedAt = new Date();
-  data.author = 'Jody Septiawan';
+  db.connect(function (err, client, done) {
+    if (err) throw err;
 
-  blogs.push(data);
+    const query = `INSERT INTO tb_blog(title,content) VALUES('${title}','${content}');`;
 
-  res.redirect('/blog');
+    client.query(query, function (err, result) {
+      if (err) throw err;
+
+      res.redirect('/blog');
+    });
+
+    done();
+  });
 });
 
-app.get('/detail-blog/:index', (req, res) => {
-  const index = req.params.index;
+app.get('/detail-blog/:id', (req, res) => {
+  const id = req.params.id;
 
-  const blog = blogs[index];
+  db.connect(function (err, client, done) {
+    if (err) throw err;
+    const query = `SELECT * FROM tb_blog WHERE id = ${id}`;
 
-  blog.time = getFullTime(blog.postedAt);
+    client.query(query, function (err, result) {
+      if (err) throw err;
 
-  res.render('blog-detail', { data: index, blog });
+      const blog = result.rows[0];
+
+      blog.time = getFullTime(blog.postedAt);
+
+      console.log(blog);
+
+      res.render('blog-detail', { blog });
+    });
+
+    done();
+  });
 });
 
-app.get('/delete-blog/:index', (req, res) => {
-  const index = req.params.index;
-  blogs.splice(index, 1);
+app.get('/delete-blog/:id', (req, res) => {
+  const id = req.params.id;
 
-  res.redirect('/blog');
+  db.connect(function (err, client, done) {
+    if (err) throw err;
+
+    const query = `DELETE FROM tb_blog WHERE id = ${id};`;
+
+    client.query(query, function (err, result) {
+      if (err) throw err;
+
+      res.redirect('/blog');
+    });
+
+    done();
+  });
 });
 
 app.get('/contact', (req, res) => {
