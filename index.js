@@ -1,4 +1,7 @@
 const express = require('express');
+const bcrypt = require('bcrypt');
+const session = require('express-session');
+const flash = require('express-flash');
 
 const db = require('./connection/db');
 
@@ -6,15 +9,6 @@ const app = express();
 const PORT = 80;
 
 const isLogin = true;
-const blogs = [
-  {
-    title: 'Test 1',
-    content: 'Test 1 COntent',
-    time: '23 May 2022 09:25 WIB',
-    author: 'Jody Septiawan',
-    postedAt: '2022-05-23T02:26:27.403Z',
-  },
-];
 
 // db.connect(function (err, _, done) {
 //   if (err) throw err;
@@ -28,6 +22,17 @@ app.set('view engine', 'hbs'); //setup template engine / view engine
 app.use('/public', express.static(__dirname + '/public'));
 
 app.use(express.urlencoded({ extended: false }));
+
+app.use(
+  session({
+    secret: 'rahasia',
+    resave: false,
+    saveUninitialized: true,
+    cookie: { maxAge: 1000 * 60 * 60 * 2 },
+  })
+);
+
+app.use(flash());
 
 app.get('/', (req, res) => {
   res.render('index');
@@ -46,12 +51,16 @@ app.get('/blog', (req, res) => {
 
       const newBlog = blogsData.map((blog) => {
         blog.time = getFullTime(blog.postedAt);
-        blog.isLogin = isLogin;
+        blog.isLogin = req.session.isLogin;
         blog.icon = '<h2>Hello</h2>';
         return blog;
       });
 
-      res.render('blog', { isLogin: isLogin, blogs: newBlog });
+      res.render('blog', {
+        isLogin: req.session.isLogin,
+        user: req.session.user,
+        blogs: newBlog,
+      });
     });
 
     done();
@@ -124,6 +133,93 @@ app.get('/delete-blog/:id', (req, res) => {
 
 app.get('/contact', (req, res) => {
   res.render('contact');
+});
+
+app.get('/register', (req, res) => {
+  res.render('register');
+});
+
+app.post('/register', (req, res) => {
+  const name = req.body.name;
+  const email = req.body.email;
+  let password = req.body.password;
+
+  password = bcrypt.hashSync(password, 10);
+
+  db.connect(function (err, client, done) {
+    if (err) throw err;
+
+    const query = `INSERT INTO tb_user(name,email,password) 
+                    VALUES('${name}','${email}','${password}');`;
+
+    client.query(query, function (err, result) {
+      if (err) throw err;
+
+      if (err) {
+        res.redirect('/register');
+      } else {
+        res.redirect('/login');
+      }
+    });
+
+    done();
+  });
+});
+
+app.get('/login', (req, res) => {
+  res.render('login');
+});
+
+app.post('/login', (req, res) => {
+  const email = req.body.email;
+  const password = req.body.password;
+
+  if (email == '' || password == '') {
+    req.flash('warning', 'Please insert all fields');
+    return res.redirect('/login');
+  }
+
+  db.connect(function (err, client, done) {
+    if (err) throw err;
+
+    const query = `SELECT * FROM tb_user WHERE email = '${email}';`;
+
+    client.query(query, function (err, result) {
+      if (err) throw err;
+
+      const data = result.rows;
+
+      if (data.length == 0) {
+        req.flash('error', 'Email not found');
+        return res.redirect('/login');
+      }
+
+      const isMatch = bcrypt.compareSync(password, data[0].password);
+
+      if (isMatch == false) {
+        req.flash('error', 'Password not match');
+        return res.redirect('/login');
+      }
+
+      req.session.isLogin = true;
+      req.session.user = {
+        id: data[0].id,
+        email: data[0].email,
+        name: data[0].name,
+      };
+
+      req.flash('success', `Welcome, <b>${data[0].email}</b>`);
+
+      res.redirect('/blog');
+    });
+
+    done();
+  });
+});
+
+app.get('/logout', (req, res) => {
+  req.session.destroy();
+  res.redirect('/blog');
 });
 
 app.listen(PORT, () => {

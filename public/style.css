@@ -24,6 +24,18 @@
   text-decoration: none;
 }
 
+.contact-me .btn-auth {
+  font-size: 15px !important;
+  padding: 8px 20px !important;
+  color: rgb(72, 72, 72) !important;
+  text-decoration: none !important;
+  background-color: #ec4c3700;
+}
+
+.contact-me .btn-auth:hover {
+  color: #ec4d37 !important;
+}
+
 /* Card Profile */
 
 .personal {
@@ -180,7 +192,6 @@ select {
 
 .form-container {
   width: 500px;
-  margin: 10px auto 0;
 }
 
 .form-container h1 {
