@@ -33,27 +33,42 @@
       </div>
     </nav>
 
-    <form class='form-container' action='/add-blog' method='POST'>
-      <h1>Create Post Blog</h1>
-      <div>
-        <label for='input-title' class='form-label'>Title</label>
-        <input id='input-title' name='title' class='form-control' />
-      </div>
-      <div>
-        <label for='input-content' class='form-label'>Content</label>
-        <textarea
-          id='input-content'
-          name='content'
-          class='form-control'
-        ></textarea>
-      </div>
-      <div>
-        <label for='input-image' class='form-label'>Upload Image</label>
-        <input name='image' class='form-control' type='file' id='input-image' />
-      </div>
-      <div class='d-flex justify-content-end'>
-        <button type='submit' class='btn'>Post Blog</button>
-      </div>
-    </form>
+    <div
+      style='height: 93vh'
+      class='d-flex align-items-center justify-content-center'
+    >
+      <form
+        class='form-container'
+        action='/add-blog'
+        method='POST'
+        enctype='multipart/form-data'
+      >
+        <h1>Create Post Blog</h1>
+        <div>
+          <label for='input-title' class='form-label'>Title</label>
+          <input id='input-title' name='title' class='form-control' />
+        </div>
+        <div>
+          <label for='input-content' class='form-label'>Content</label>
+          <textarea
+            id='input-content'
+            name='content'
+            class='form-control'
+          ></textarea>
+        </div>
+        <div>
+          <label for='input-image' class='form-label'>Upload Image</label>
+          <input
+            name='image'
+            class='form-control'
+            type='file'
+            id='input-image'
+          />
+        </div>
+        <div class='d-flex justify-content-end'>
+          <button type='submit' class='btn'>Post Blog</button>
+        </div>
+      </form>
+    </div>
   </body>
 </html>

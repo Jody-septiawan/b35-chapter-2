@@ -4,6 +4,7 @@ const session = require('express-session');
 const flash = require('express-flash');
 
 const db = require('./connection/db');
+const upload = require('./middlewares/uploadFile');
 
 const app = express();
 const PORT = 80;
@@ -20,6 +21,7 @@ const isLogin = true;
 app.set('view engine', 'hbs'); //setup template engine / view engine
 
 app.use('/public', express.static(__dirname + '/public'));
+app.use('/uploads', express.static(__dirname + '/uploads'));
 
 app.use(express.urlencoded({ extended: false }));
 
@@ -41,8 +43,24 @@ app.get('/', (req, res) => {
 app.get('/blog', (req, res) => {
   db.connect(function (err, client, done) {
     if (err) throw err;
+    let query = '';
 
-    const query = 'SELECT * FROM tb_blog';
+    if (req.session.isLogin == true) {
+      query = `SELECT tb_blog.*, tb_user.id as "user_id", tb_user.name, tb_user.email
+      FROM tb_blog
+      LEFT JOIN tb_user
+      ON tb_blog.author_id = tb_user.id 
+      WHERE tb_blog.author_id = ${req.session.user.id}
+      ORDER BY tb_blog.id DESC`;
+    } else {
+      query = `SELECT tb_blog.*, tb_user.id as "user_id", tb_user.name, tb_user.email
+      FROM tb_blog
+      LEFT JOIN tb_user
+      ON tb_blog.author_id = tb_user.id
+      ORDER BY tb_blog.id DESC`;
+    }
+
+    console.log(query);
 
     client.query(query, function (err, result) {
       if (err) throw err;
@@ -53,8 +71,14 @@ app.get('/blog', (req, res) => {
         blog.time = getFullTime(blog.postedAt);
         blog.isLogin = req.session.isLogin;
         blog.icon = '<h2>Hello</h2>';
+        blog.name = blog.name ? blog.name : '-';
+        blog.image = blog.image
+          ? '/uploads/' + blog.image
+          : '/public/assets/blog-img.png';
         return blog;
       });
+
+      console.log(newBlog);
 
       res.render('blog', {
         isLogin: req.session.isLogin,
@@ -68,17 +92,25 @@ app.get('/blog', (req, res) => {
 });
 
 app.get('/add-blog', (req, res) => {
+  if (req.session.isLogin != true) {
+    req.flash('warning', 'Please Login...');
+    return res.redirect('/blog');
+  }
+
   res.render('form-blog');
 });
 
-app.post('/add-blog', (req, res) => {
+app.post('/add-blog', upload.single('image'), (req, res) => {
   const title = req.body.title;
   const content = req.body.content;
+  const userId = req.session.user.id;
+  const fileName = req.file.filename;
 
   db.connect(function (err, client, done) {
     if (err) throw err;
 
-    const query = `INSERT INTO tb_blog(title,content) VALUES('${title}','${content}');`;
+    const query = `INSERT INTO tb_blog(title,content, author_id, image) 
+                    VALUES('${title}','${content}',${userId}, '${fileName}');`;
 
     client.query(query, function (err, result) {
       if (err) throw err;
@@ -95,7 +127,11 @@ app.get('/detail-blog/:id', (req, res) => {
 
   db.connect(function (err, client, done) {
     if (err) throw err;
-    const query = `SELECT * FROM tb_blog WHERE id = ${id}`;
+    const query = `SELECT tb_blog.*, tb_user.id as "user_id", tb_user.name, tb_user.email
+                    FROM tb_blog
+                    LEFT JOIN tb_user
+                    ON tb_blog.author_id = tb_user.id
+                    WHERE tb_blog.id = ${id}`;
 
     client.query(query, function (err, result) {
       if (err) throw err;
@@ -158,6 +194,7 @@ app.post('/register', (req, res) => {
       if (err) {
         res.redirect('/register');
       } else {
+        req.flash('success', 'Register <b>success</b>, please login ...');
         res.redirect('/login');
       }
     });

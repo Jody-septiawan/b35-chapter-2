@@ -46,6 +46,12 @@
     <!-- Blog list -->
     <div id='contents' class='blog-list'>
 
+      {{#if messages.warning}}
+        <div class='alert alert-warning w-100' role='alert'>
+          {{{messages.warning}}}
+        </div>
+      {{/if}}
+
       {{#if messages.success}}
         <div class='alert alert-success w-100' role='alert'>
           {{{messages.success}}}
@@ -63,7 +69,7 @@
         <div class='blog-list-item'>
           <div class='blog-image'>
             <img
-              src='/public/assets/blog-img.png'
+              src={{this.image}}
               alt='Pasar Coding di Indonesia Dinilai Masih Menjanjikan'
             />
           </div>
@@ -82,7 +88,7 @@
             <div class='detail-blog-content'>
               {{this.time}}
               |
-              {{this.author}}
+              {{this.name}}
             </div>
             <p>
               {{this.content}}
